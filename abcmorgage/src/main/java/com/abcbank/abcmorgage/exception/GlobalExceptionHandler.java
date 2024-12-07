@@ -25,8 +25,8 @@ public class GlobalExceptionHandler {
     }
 
     // Handle generic exceptions
-    @ExceptionHandler(PasswordIncorectException.class)
-    public ResponseEntity<Object> handlePasswordIncorectException(PasswordIncorectException ex, WebRequest request) {
+    @ExceptionHandler(WrongCredentialsException.class)
+    public ResponseEntity<Object> handleWrongCredentialsException(WrongCredentialsException ex, WebRequest request) {
 
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());
@@ -37,7 +37,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handlePasswordIncorectException(Exception ex, WebRequest request) {
+    public ResponseEntity<Object> handleException(Exception ex, WebRequest request) {
 
         Map<String, Object> response = new HashMap<>();
         response.put("timestamp", LocalDateTime.now());

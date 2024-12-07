@@ -1,7 +1,6 @@
 package com.abcbank.abcmorgage.model;
 
 import jakarta.persistence.*;
-import lombok.*;
 
 import java.time.LocalDate;
 
@@ -12,6 +11,7 @@ public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long customerId;
+    private String username;
 
     private String nric;
     private String customerName;
@@ -65,5 +65,13 @@ public class Customer {
 
     public void setGender(String gender) {
         this.gender = gender;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

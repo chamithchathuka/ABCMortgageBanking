@@ -6,5 +6,5 @@ import org.springframework.stereotype.Service;
 
 public interface CustomerService {
 
-    public AccessTokenDTO login(LoginRequest loginRequest);
+    AccessTokenDTO login(LoginRequest loginRequest);
 }

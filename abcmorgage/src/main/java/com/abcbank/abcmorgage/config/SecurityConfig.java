@@ -9,27 +9,23 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
-    private final BearerTokenAuthFilter bearerTokenAuthFilter;
-
-    public SecurityConfig(BearerTokenAuthFilter bearerTokenAuthFilter) {
-        this.bearerTokenAuthFilter = bearerTokenAuthFilter;
-    }
-
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   BearerTokenAuthFilter bearerTokenAuthFilter) throws Exception {
+
         http
-                .csrf().disable() // Disable CSRF if needed (customize as required)
+                .csrf().disable()
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/api/customer/login").permitAll() // Public access for login
-                        .anyRequest().authenticated() // All other requests require authentication
+                        .requestMatchers("/api/customer/login").permitAll()
+                        .anyRequest().authenticated()
                 )
-                .addFilterAfter(bearerTokenAuthFilter, BasicAuthenticationFilter.class);
+                .addFilterBefore(bearerTokenAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

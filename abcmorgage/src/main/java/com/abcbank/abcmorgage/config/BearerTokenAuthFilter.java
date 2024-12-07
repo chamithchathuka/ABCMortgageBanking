@@ -1,45 +1,51 @@
 package com.abcbank.abcmorgage.config;
 
+import com.abcbank.abcmorgage.util.JwtUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.security.SignatureException;
-import java.time.LocalDateTime;
 
 @Component
 public class BearerTokenAuthFilter extends OncePerRequestFilter {
 
+    private final JwtUtil jwtUtil;
+    private final UserDetailsService userDetailsService;
+
+    public BearerTokenAuthFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
+        this.jwtUtil = jwtUtil;
+        this.userDetailsService = userDetailsService;
+    }
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
         String authHeader = request.getHeader("Authorization");
 
-        //todo need to implement filter to validate jwt token
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            String token = authHeader.substring(7);
+            String username = jwtUtil.extractUsername(token);
 
-        /*if(authHeader != null && authHeader.startsWith("Bearer ") && !authHeader.substring(7).isBlank()) {
-            String accessToken = authHeader.substring(7);
-            User user = isTokenValid(accessToken);
+            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
-            if(user == null) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
+                if (jwtUtil.extractUsername(token).equals(userDetails.getUsername())) {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            userDetails, null, userDetails.getAuthorities());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
             }
-            else {
-                Authentication authenticationToken = new UsernamePasswordAuthenticationToken(user.getId(), null, user.getAuthorities());
-                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-            }
-        }*/
+        }
 
         filterChain.doFilter(request, response);
     }

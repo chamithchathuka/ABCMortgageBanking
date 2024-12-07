@@ -2,21 +2,14 @@ package com.abcbank.abcmorgage.service.impl;
 
 import com.abcbank.abcmorgage.dto.AccessTokenDTO;
 import com.abcbank.abcmorgage.dto.LoginRequest;
-import com.abcbank.abcmorgage.exception.PasswordIncorectException;
-import com.abcbank.abcmorgage.exception.UserNotFoundException;
-import com.abcbank.abcmorgage.model.Customer;
-import com.abcbank.abcmorgage.repository.CustomerRepository;
+import com.abcbank.abcmorgage.exception.WrongCredentialsException;
 import com.abcbank.abcmorgage.service.CustomerService;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
+import com.abcbank.abcmorgage.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
-
-import java.security.Key;
-import java.util.Date;
-import java.util.Optional;
 
 @Service
 public class CustomerServiceImpl implements CustomerService {
@@ -24,46 +17,26 @@ public class CustomerServiceImpl implements CustomerService {
     @Value("${api.jwtSecret}")
     private String jwtSecret;
 
-    private final CustomerRepository customerRepository;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
-    public CustomerServiceImpl(CustomerRepository customerRepository) {
-        this.customerRepository = customerRepository;
+    public CustomerServiceImpl(AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
     public AccessTokenDTO login(LoginRequest loginRequest) {
 
-        Optional<Customer> customerOptional = customerRepository.findByCustomerId(loginRequest.customerId());
-
-        Customer customer = customerOptional
-                .orElseThrow(() -> new UserNotFoundException("Customer not found"));
-
-        BCryptPasswordEncoder bCryptPasswordEncoder = new BCryptPasswordEncoder();
-        boolean passwordMatches = bCryptPasswordEncoder.matches(loginRequest.password(), customer.getPassword());
-
-        if(!passwordMatches) {
-            throw new PasswordIncorectException("Password is Not Valid");
+        try {
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.username(),
+                    loginRequest.password()));
+        } catch (AuthenticationException e) {
+            throw new WrongCredentialsException("Invalid username or password");
         }
 
-        String accessToken = generateJwtToken(String.valueOf(customer.getCustomerId()));
+        String accessToken = jwtUtil.generateToken(loginRequest.username());
 
         return new AccessTokenDTO(accessToken);
-    }
-
-    private String generateJwtToken(String userId) {
-
-        long jwtExpirationMs = 30000;
-
-        return Jwts.builder()
-                .subject((userId))
-                .issuedAt(new Date())
-                .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                .signWith(getSigningKey(jwtSecret))
-                .compact();
-    }
-
-    private Key getSigningKey(String jwtSecret) {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 }
