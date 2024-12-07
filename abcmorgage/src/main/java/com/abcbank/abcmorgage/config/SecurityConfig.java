@@ -1,3 +1,12 @@
 package com.abcbank.abcmorgage.config;
 
-public class SecurityConfig {}
+
+import org.springframework.context.annotation.Configuration;
+
+@Configuration
+//@EnableWebSecurity
+public class SecurityConfig {
+
+
+
+}
