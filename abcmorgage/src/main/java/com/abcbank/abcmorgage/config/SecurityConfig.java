@@ -1,3 +1,5 @@
 package com.abcbank.abcmorgage.config;
 
-public class SecurityConfig {}
+public class SecurityConfig {
+
+}
